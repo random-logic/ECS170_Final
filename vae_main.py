@@ -173,17 +173,12 @@ def prepare_features(data, user_data):
     return genre_list, merged_data, movie_features
     
 
-def create_x_input(merged_data, genre_list):
-   
+def create_x_input(merged_data):
     # Construct x_input
     x_input = []
-
     for index, row in merged_data.iterrows():
         x_input.append(list(row['genres_list']) + [row['averageRating'], row['numVotes'], row['UserRating']])
-
-    # print(x_input[0])
     return x_input
-
 
 
 def train_vae(x_input, epochs=50, batch_size=64, learning_rate=1e-3):

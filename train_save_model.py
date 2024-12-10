@@ -6,8 +6,8 @@ EPOCHS = 10
 # Define the training process
 def train_and_save_model(movie_data_path, user_data_path, save_path="vae_model.pth"):
     data, user_data, _, _ = preprocess_data(movie_data_path, user_data_path)
-    genre_list, merged_data, _ = prepare_features(data, user_data)
-    x_input = create_x_input(merged_data, genre_list)
+    _, merged_data, _ = prepare_features(data, user_data)
+    x_input = create_x_input(merged_data)
 
     # Train VAE
     vae = train_vae(x_input, epochs=EPOCHS, batch_size=64, learning_rate=1e-3)
