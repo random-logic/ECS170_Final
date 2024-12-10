@@ -1,4 +1,14 @@
+# List of genres for input
+
+genres = [
+    'Action', 'Adult', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime',
+    'Documentary', 'Drama', 'Family', 'Fantasy', 'Game-Show',
+    'History', 'Horror', 'Music', 'Musical', 'Mystery', 'News', 'Reality-TV',
+    'Romance', 'Sci-Fi', 'Sport', 'Talk-Show', 'Thriller', 'War', 'Western'
+]
+
 # Main Page Template
+
 main_page = """
 <!DOCTYPE html>
 <html lang="en">

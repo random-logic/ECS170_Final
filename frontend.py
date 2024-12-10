@@ -8,13 +8,6 @@ from frontend_templates import *
 
 app = Flask(__name__)  # Initialize the Flask app
 
-# List of genres for input
-genres = [
-    'Action', 'Adult', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime',
-    'Documentary', 'Drama', 'Family', 'Fantasy', 'Game-Show',
-    'History', 'Horror', 'Music', 'Musical', 'Mystery', 'News', 'Reality-TV',
-    'Romance', 'Sci-Fi', 'Sport', 'Talk-Show', 'Thriller', 'War', 'Western'
-]
 
 
 def chunk_list(lst, n):

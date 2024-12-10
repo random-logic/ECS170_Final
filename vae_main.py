@@ -302,6 +302,10 @@ def run_frontend(genres_selected, avg_rating, num_votes):
     print("preparing features...")
     genre_list, merged_data, movie_features = prepare_features(data, user_data)
 
+    # list genres
+    print("listing genres...")
+    print(genre_list)
+
     print("creating_x_input...")
     x_input = create_x_input(merged_data, genre_list)
 
@@ -329,7 +333,7 @@ def run_frontend(genres_selected, avg_rating, num_votes):
 
     # Prepare input for recommendation
     user_input_vector =  [
-        1 if genre in genres_selected else 0 for genre in genres
+        1 if genre in genres_selected else 0 for genre in genre_list
     ] + [scaled_avg_rating, scaled_votes_num]
 
 
@@ -350,7 +354,8 @@ def run_frontend(genres_selected, avg_rating, num_votes):
         movie_encoder
     )
     
-    # TODO Bhavesh: fix the output for rank here
+    rank = range(len(output))
+    output["Rank"] = rank
 
     return output
 
