@@ -8,8 +8,12 @@ from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer, LabelEncode
 from sklearn.metrics.pairwise import cosine_similarity
 import torch.optim as optim
 
+
+MOVIE_DATA_PATH = "data/cleaned_data.csv"
+USER_DATA_PATH = "data/user_data.csv"
 LATENT_DIM = 10
 HIDDEN_DIMS = [512, 256, 128, 64, 32]
+
 
 # BACKEND CODE
 class Encoder(nn.Module):
@@ -300,11 +304,8 @@ def scale_inputs(input1, input2, range1=(0, 10), range2=(0, 1000)):
 
 def run_for_frontend(genres_selected, avg_rating, num_votes):
     # Load preprocessed data and trained model
-    movie_data_path = "data/cleaned_data.csv"
-    user_data_path = "data/user_data.csv"
-    
     data, user_data, _, movie_encoder = preprocess_data(
-        movie_data_path, user_data_path
+        MOVIE_DATA_PATH, USER_DATA_PATH
     )
     print("preparing features...")
 
