@@ -3,11 +3,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset, random_split, TensorDataset
+from torch.utils.data import DataLoader, random_split, TensorDataset
 from sklearn.preprocessing import MinMaxScaler, MultiLabelBinarizer, LabelEncoder
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.model_selection import train_test_split
 import torch.optim as optim
+
+LATENT_DIM = 10
+HIDDEN_DIMS = [512, 256, 128, 64, 32]
 
 # BACKEND CODE
 class Encoder(nn.Module):
@@ -100,11 +102,13 @@ def preprocess_data(movie_data_path, user_data_path):
     for col in categorical_cols:
         data[col].fillna('Unknown', inplace=True)
 
-    # data = data[data['numVotes'] > 10000]
-    #print(f"Data shape after filtering movies with numVotes > 5000: {data.shape}")    
+    # reducing number for genres, uncomment to return to original
+    
 
     data = data[data['startYear'] > 2000]
+    
     data = data.dropna(subset=['primaryTitle', 'averageRating', 'numVotes'])
+
     # print(f"Data shape after dropping missing primaryTitle, averageRating, or numVotes: {data.shape}")
 
 
@@ -158,6 +162,9 @@ def prepare_features(data, user_data):
     
     merged_data = pd.merge(user_features, movie_features, on='tconst', how='inner')
     merged_data.fillna(0, inplace=True)  # Fill remaining NaN with 0
+    
+    print(genre_list)
+    #print(len(genre_list))
 
     return genre_list, merged_data, movie_features
     
@@ -175,9 +182,8 @@ def create_x_input(merged_data, genre_list):
 
 
 
-def train_vae(x_input, epochs=1, batch_size=64, learning_rate=1e-3):
+def train_vae(x_input, epochs=50, batch_size=64, learning_rate=1e-3):
     merged_data_tensor = torch.tensor(x_input, dtype=torch.float32)
-    print(merged_data_tensor.shape)
     dataset = TensorDataset(merged_data_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -187,16 +193,14 @@ def train_vae(x_input, epochs=1, batch_size=64, learning_rate=1e-3):
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     input_dim = merged_data_tensor.shape[1]
-    hidden_dims = [512, 256, 128, 64, 32]
-    latent_dim = 30
     BIN_MASK = torch.tensor([True, True, True, True, True, True, True, True, True, True,
-                        True, True, True, True, True, True, True, True, True, True,
-                        True, True, True, True, True, True, False, False, False])
+                        True, True, True, True, True, True, True, True, True, True, True,True,True,True,True,True,
+                        False, False, False])
     CONT_MASK = torch.tensor([False, False, False, False, False, False, False, False, False, False,
-                          False, False, False, False, False, False, False, False, False, False,
-                          False, False, False, False, False, False, True, True, True])
+                          False, False, False, False, False, False, False, False, False, False, False, False,False, False,False, False,
+                        True, True, True])
 
-    vae = VAE(input_dim, *hidden_dims, latent_dim)
+    vae = VAE(input_dim, *HIDDEN_DIMS, LATENT_DIM)
     optimizer = optim.Adam(vae.parameters(), lr=learning_rate)
 
     for epoch in range(epochs):
@@ -266,13 +270,16 @@ def generate_recommendations(user_rating, movie_features, movie_features_sample,
             recommended_movies['primaryTitle'].astype(int).values
         )
 
+        #removing NaN titles
+        recommended_movies = recommended_movies.dropna()
+
         print("returning recommendations")
         # Select top_n distinct movies
         return recommended_movies.head(top_n)[['decoded_title', 'similarity_score']].rename(
             columns={'decoded_title': 'Movie', 'similarity_score': 'Similarity Score'}
         )
 
-def scale_inputs(input1, input2, range1=(0, 10), range2=(0, 10000)):
+def scale_inputs(input1, input2, range1=(0, 10), range2=(0, 1000)):
     # Normalize input1 using range1
     if range1[1] > range1[0]:  # Ensure valid range
         scaled_input1 = (input1 - range1[0]) / (range1[1] - range1[0])
@@ -291,58 +298,33 @@ def scale_inputs(input1, input2, range1=(0, 10), range2=(0, 10000)):
 
     return scaled_input1, scaled_input2
 
-def run_frontend(genres_selected, avg_rating, num_votes):
+def run_for_frontend(genres_selected, avg_rating, num_votes):
     # Load preprocessed data and trained model
     movie_data_path = "data/cleaned_data.csv"
     user_data_path = "data/user_data.csv"
-    data, user_data, multi_label_encoder, movie_encoder = preprocess_data(
+    
+    data, user_data, _, movie_encoder = preprocess_data(
         movie_data_path, user_data_path
     )
-
     print("preparing features...")
-    genre_list, merged_data, movie_features = prepare_features(data, user_data)
 
-    # list genres
-    print("listing genres...")
-    print(genre_list)
-
-    print("creating_x_input...")
-    x_input = create_x_input(merged_data, genre_list)
-
+    genre_list, _, movie_features = prepare_features(data, user_data)
     print("loading model...")
 
-    hidden_dims = [512, 256, 128, 64, 32]
-    latent_dim = 30
-    input_dim = 29  # Number of genres + avg_rating + num_votes
-
-    vae = VAE(input_dim, *hidden_dims, latent_dim)
-
+    
+    input_dim = len(genre_list) + 3  # Number of genres + avg_rating + num_votes
+    vae = VAE(input_dim, *HIDDEN_DIMS, LATENT_DIM)
     vae.load_state_dict(torch.load("vae_model.pth"))
     vae.eval()
     print("Model loaded successfully.")
-
-    avg_rating = float(avg_rating)
-    num_votes = float(num_votes)
-
-    print("avg_rating type:", type(avg_rating))
-    print("num_votes type:", type(num_votes))
-    print(avg_rating)
-    print(num_votes)
     
-    scaled_avg_rating, scaled_votes_num = scale_inputs(avg_rating, num_votes)
+    scaled_avg_rating, scaled_votes_num = scale_inputs(float(avg_rating), float(num_votes))
 
     # Prepare input for recommendation
     user_input_vector =  [
         1 if genre in genres_selected else 0 for genre in genre_list
     ] + [scaled_avg_rating, scaled_votes_num]
-
-
-    print("User input vector:", user_input_vector)
-    print("Input vector length:", len(user_input_vector))
-
     user_rating = 0.5
-    
-    # Generate recommendations
     print("generating recommendation...")
 
     output = generate_recommendations(
@@ -354,62 +336,9 @@ def run_frontend(genres_selected, avg_rating, num_votes):
         movie_encoder
     )
     
-    rank = range(len(output))
-    output["Rank"] = rank
+    # Get ranks
+    output["Rank"] = range(1, len(output) + 1, 1)
+    # Move 'Rank' column to the first position
+    output = output[['Rank', 'Movie', 'Similarity Score']]
 
     return output
-
-### FUNCTION CALLS FOR TESTING ###
-
-# if __name__ == "__main__":
-#     # File paths (update with actual file paths)
-#     movie_data_path = "/Users/bhaveshsasikumar/Desktop/ecs170_proj/cleaned_data.csv"
-#     user_data_path = "/Users/bhaveshsasikumar/Desktop/ecs170_proj/user_data.csv"
-
-#     # Preprocess data
-#     try:
-#         print("Preprocessing data...")
-#         data, user_data, multi_label_encoder, movie_encoder = preprocess_data(movie_data_path, user_data_path)
-#     except Exception as e:
-#         print(f"Error during preprocessing: {e}")
-#         exit()
-
-#     # Prepare features
-#     try:
-#         print("Preparing features...")
-#         genre_list, merged_data, movie_features = prepare_features(data, user_data)
-#         print(f"Merged data shape: {merged_data.shape}")
-#     except Exception as e:
-#         print(f"Error during feature preparation: {e}")
-#         exit()
-
-
-#     # Create x_input
-#     try:
-#         print("Creating x_input...")
-#         x_input = create_x_input(merged_data, genre_list)
-#         print(f"x_input shape: {len(x_input)}, features per row: {len(x_input[0])}")
-#     except Exception as e:
-#         print(f"Error during x_input creation: {e}")
-#         exit()
-
-#     # Train VAE
-#     try:
-#         print("Training VAE...")
-#         vae = train_vae(x_input, epochs=1, batch_size=64, learning_rate=1e-3)
-#     except Exception as e:
-#         print(f"Error during VAE training: {e}")
-#         exit()
-
-#     # Generate Recommendations
-#     try:
-#         print("Generating recommendations...")
-#         # Simulate user input for ratings and features
-#         user_rating = 4.5  # Example rating
-#         movie_features_sample = [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0.7, 0.8]
-
-#         recommendations = generate_recommendations(user_rating, movie_features, movie_features_sample, vae, data, movie_encoder)
-#         print(recommendations)
-#     except Exception as e:
-#         print(f"Error during recommendations generation: {e}")
-#         exit()

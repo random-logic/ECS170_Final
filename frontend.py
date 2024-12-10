@@ -1,14 +1,11 @@
 from flask import Flask, render_template_string, request
 import pandas as pd
-import torch
 
-from vae_main import *
+from vae_main import run_for_frontend
 from frontend_templates import *
 
 
 app = Flask(__name__)  # Initialize the Flask app
-
-
 
 def chunk_list(lst, n):
     """Split a list into chunks of size n."""
@@ -17,12 +14,10 @@ def chunk_list(lst, n):
 
 
 ### Frontend routes here
-
 @app.route("/", methods=["GET"])
 def index():
     # Group genres into chunks of n for display
-    genre_chunks = list(chunk_list(genres, (n:=3)))
-    return render_template_string(main_page, genre_chunks=genre_chunks)
+    return render_template_string(main_page, genre_chunks=list(chunk_list(genres, (n:=3))))
 
 @app.route("/output", methods=["POST"])
 def output():
@@ -49,7 +44,7 @@ def output():
     # Validate and process num_votes
     try:
         num_votes = int(num_votes)
-        if not (0 <= num_votes <= 10000):
+        if not (0 <= num_votes <= 1000):
             error_message = "Number of votes must be non-negative."
     except (ValueError, TypeError):
         error_message = "Invalid Number of Votes input."
@@ -57,7 +52,7 @@ def output():
     # Mock output if there are no errors
     if not error_message:
         try:
-            output = run_frontend(genres_selected, avg_rating, num_votes)
+            output = run_for_frontend(genres_selected, avg_rating, num_votes)
 
         except Exception as e:
             error_message = f"Error generating recommendations: {str(e)}"

@@ -1,14 +1,7 @@
 # List of genres for input
-
-genres = [
-    'Action', 'Adult', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime',
-    'Documentary', 'Drama', 'Family', 'Fantasy', 'Game-Show',
-    'History', 'Horror', 'Music', 'Musical', 'Mystery', 'News', 'Reality-TV',
-    'Romance', 'Sci-Fi', 'Sport', 'Talk-Show', 'Thriller', 'War', 'Western'
-]
+genres = ['Action', 'Adult', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'Game-Show', 'History', 'Horror', 'Music', 'Musical', 'Mystery', 'News', 'Reality-TV', 'Romance', 'Sci-Fi', 'Sport', 'Talk-Show', 'Thriller', 'War', 'Western']
 
 # Main Page Template
-
 main_page = """
 <!DOCTYPE html>
 <html lang="en">
@@ -111,7 +104,7 @@ main_page = """
         <!-- Genre Selection Form -->
         <form method="POST" action="/output">
             <div class="form-section">
-                <h2>Select Genres (At least 1)</h2>
+                <h2><label>Select Genres (At least 1):</label></h2><br>
                 <div class="genres">
                     {% for chunk in genre_chunks %}
                     {% for genre in chunk %}
@@ -138,13 +131,13 @@ main_page = """
             </div>
 
             <div class="form-section">
-                <h2><label for="votes_num">Enter Number of Votes (0-10000):</label></h2>
+                <h2><label for="votes_num">Enter Number of Votes (0-1000):</label></h2>
                 <input 
                     type="number" 
                     id="votes_num" 
                     name="votes_num" 
                     min="0" 
-                    max="10000" 
+                    max="1000" 
                     required
                 >
             </div>
@@ -236,6 +229,19 @@ output_page = """
         button:hover {
             background-color: #0056b3;
         }
+
+        .recommendations {
+            display: flex;
+            justify-content: center; /* Centers content horizontally */
+        }
+
+        .output-wrapper {
+            display: flex;
+            justify-content: center; /* Centers content horizontally */
+            align-items: center; /* Optional: Aligns content vertically */
+            flex-wrap: wrap; /* Optional: Wrap content if needed */
+            width: 100%; /* Ensures responsiveness */
+        }
     </style>
 </head>
 <body>
@@ -249,7 +255,11 @@ output_page = """
         <!-- Recommendations section -->
         <h2>Your Recommendations</h2>
         <div class="recommendations">
-            {{ output|safe }}
+            <div class="recommendations">
+                <div class="output-wrapper">
+                    {{ output|safe }}
+                </div>
+            </div>
         </div>
         {% endif %}
 
@@ -291,8 +301,8 @@ info_page = """
 
         /* Info container styling */
         .info-container {
-            width: 90%;
-            max-width: 800px;
+            width: 100%;
+            height: 100%;
             background: white;
             padding: 20px;
             border-radius: 8px;
@@ -343,16 +353,12 @@ info_page = """
 </head>
 <body>
     <div class="info-container">
-        <h1>About This Application</h1>
-        <p>This application allows users to:</p>
-        <ul>
-            <li>Select their favorite genres from a predefined list.</li>
-            <li>Input an average rating (a floating-point number between 0 and 10).</li>
-            <li>Specify the number of votes (a positive integer).</li>
-        </ul>
-        <p>
-            Once you submit the form, the selected genres, average rating, and number of votes will be used to display recommendations on a separate page.
-        </p>
+        <iframe 
+            src="https://docs.google.com/document/d/14KE8ow0AHY00IBd-1lNmYDbcsA3OZ_Y0dp1u6w_nW5U/preview" 
+            width="80%" 
+            height="80%" 
+            style="border: none;">
+            </iframe>
         <h1>
             <button onclick="window.location.href='/'">Go back to the main page</button>
         </h1>
